@@ -7,7 +7,12 @@ import matplotlib.pyplot as plt     # Graph visualization
 merged_df = pd.DataFrame()
 
 # List of working files, using pathnames
-paths = []
+paths = ['/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/516b3755-74d6-4a8a-90c1-90097a61f63d.rna_seq.augmented_star_gene_counts.tsv',
+         '/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/569b828a-c2a7-4131-94f7-585f07b06e97.rna_seq.augmented_star_gene_counts.tsv',
+         '/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/cd7a8848-af76-46b6-ad93-86dea30bea04.rna_seq.augmented_star_gene_counts.tsv',
+         '/Users/robertoruizfelix/Downloads/Tumor Samples/ffce7349-cdf4-48b0-9238-da324d638e95.rna_seq.augmented_star_gene_counts.tsv',
+         '/Users/robertoruizfelix/Downloads/Tumor Samples/7d160562-b94b-4cd9-9905-d15dadbb394a.rna_seq.augmented_star_gene_counts.tsv',
+         '/Users/robertoruizfelix/Downloads/Tumor Samples/628efe45-6269-4c4b-8f50-15be89877383.rna_seq.augmented_star_gene_counts.tsv']
 for path in paths():
     # Extract the sample name from each path
     # [0] returns sample name as beginning of pathname
