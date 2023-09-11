@@ -7,24 +7,20 @@ import matplotlib.pyplot as plt     # Graph visualization
 merged_df = pd.DataFrame()
 
 # List of working files, using pathnames
-paths = ['/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/516b3755-74d6-4a8a-90c1-90097a61f63d.rna_seq.augmented_star_gene_counts.tsv',
-         '/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/569b828a-c2a7-4131-94f7-585f07b06e97.rna_seq.augmented_star_gene_counts.tsv',
-         '/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/cd7a8848-af76-46b6-ad93-86dea30bea04.rna_seq.augmented_star_gene_counts.tsv',
-         '/Users/robertoruizfelix/Downloads/Tumor Samples/ffce7349-cdf4-48b0-9238-da324d638e95.rna_seq.augmented_star_gene_counts.tsv',
-         '/Users/robertoruizfelix/Downloads/Tumor Samples/7d160562-b94b-4cd9-9905-d15dadbb394a.rna_seq.augmented_star_gene_counts.tsv',
-         '/Users/robertoruizfelix/Downloads/Tumor Samples/628efe45-6269-4c4b-8f50-15be89877383.rna_seq.augmented_star_gene_counts.tsv']
-for path in paths():
+paths = ['/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/TCGA-CZ-4863.tsv',
+         '/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/TCGA-CW-5585.tsv',
+         '/Users/robertoruizfelix/Downloads/Normal Samples (tumor)/TCGA-B2-5641.tsv',
+         '/Users/robertoruizfelix/Downloads/Tumor Samples/TCGA-CJ-5684.tsv',
+         '/Users/robertoruizfelix/Downloads/Tumor Samples/TCGA-BP-4999.tsv',
+         '/Users/robertoruizfelix/Downloads/Tumor Samples/TCGA-BP-4756.tsv']
+for path in paths:
     # Extract the sample name from each path
     # [0] returns sample name as beginning of pathname
-    filename = os.path.splitext(os.path.basename(path))[0]
-    sample_name = '-'.join(filename.split('-'))[:3]
+    sample_name = os.path.splitext(os.path.basename(path))[0]
     # Load new filename into pd df
     #sep (delimeter) by tabs bc tsv not csv
     #Skip first row as it is useless
-    data = pd.read_csv(path, sep = '\t', skiprows = 1)
-    print(data.columns())       # Show columns available
-for path in paths:      #Second optionary for loop just to show columns
-    # Extract necessary columns
+    data = pd.read_csv(path, sep = '\t', skiprows = [0, 2, 3, 4, 5])    #skip unwanted rows
     data = data[['gene_id', 'fpkm_unstranded']]
     # Add sample name column
     data.columns = ['gene_id', sample_name]
@@ -37,14 +33,11 @@ for path in paths:      #Second optionary for loop just to show columns
 #missing values with NaN where there are no matches
         # 'gene_id' is used to match rows
         merged_df = merged_df.merge(data, on = 'gene_id', how = 'outer')
+print(data.columns)       # Show columns available
 
 #Show first & last 5 rows
 print(merged_df.head())
-unwanted_rows = ['N_numapped', 'N_nultimapping', 'N_noFeature', 'N_ambiguous']
-# ~ is the same as drop null values 
-# 2 different ways to eliminate rows below
-#merged_df = merged_df[merged_df['gene_id'].isin(unwanted_rows) == False]
-merged_df = merged_df[~merged_df['gene_id'].isin(unwanted_rows)] 
+
 #Set 'gene_id' column as df anchor
 #inplace = true bc we want to replace achor, not create a new df with a new anchor
 merged_df.set_index('gene_id', inplace = True)
@@ -54,8 +47,8 @@ merged_df.fillna(0, inplace = True)
 
 #Calculting Fold Change
 
-tumor_samples = []
-normal_samples = []
+tumor_samples = ["TCGA-BP-4756", "TCGA-BP-4999", "TCGA-CJ-5684"]
+normal_samples = ["TCGA-B2-5641", "TCGA-CW-5585", "TCGA-CZ-4863"]
 
 #Compute mean expression value for each gene
 tumor_mean = merged_df[tumor_samples].mean(axis = 1)
@@ -71,19 +64,19 @@ fold_change.replace([-np.inf], -max_fold_change, inplace = True)
 
 #Extract upregulated (fc > 2) and downregulated (fc 0<x< 0.5) genes
 upregulated = fold_change[fold_change > 2]
-downregulated = fold_change[0 < fold_change < 0.5]
+downregulated = fold_change[(0 < fold_change) & (fold_change < 0.5)]
 
 #Create new df's for series of fold changes
 # reset_index()resets the index of the series and converts it into a DataFrame
-upregulated_df = upregulated.reset_index().rename(columns = {0: 'log2DoldChange', 'index': 'gene_id'})
-downregulated_df = downregulated.reset_index().rename(columns = {0: 'log2DoldChange', 'index': 'gene_id'})
+upregulated_df = upregulated.reset_index().rename(columns = {0: 'log2FoldChange', 'index': 'gene_id'})
+downregulated_df = downregulated.reset_index().rename(columns = {0: 'log2FoldChange', 'index': 'gene_id'})
 
 #Visualizing the data
 
 #Exclude null values 
 fold_change_graph = fold_change.dropna()
 maroon = (128, 0, 0)
-plt.hist(fold_change_graph, bins = 50, color = maroon)
+plt.hist(fold_change_graph, bins = 50, color = 'maroon', alpha = 0.7)
 #A log2 scale, for example, allows you to easily see differences in expression that represent twofold changes. 
 plt.yscale('log')
 plt.xlabel('Fold change')
@@ -96,13 +89,11 @@ plt.show()
 fold_change_graph.describe()
 print(f'Number of upregulated genes: {len(upregulated)}')
 print(f'Number of downregulated genes: {len(downregulated)}')
-print(f'Top 5 upregulated Genes: ')
-print(upregulated_df.sort_values(by = 'log2FoldChange', ascending = False).head())
-print(f'\nTop 5 downregulated Genes: ')
-print(downregulated_df.sort_values(by = 'log2FoldChange').head())
 
 #Save results (unique to each user)
 upregulated_df.to_csv('Upregulated_genes_w_foldchange.csv', index = False)
 downregulated_df.to_csv('Downregulated_genes_w_foldchange.csv', index = False)
-output_path = 'C: /Users/'
+output_path = '/Users/robertoruizfelix/Downloads/merged_Data.tsv'
+merged_df.to_csv(output_path, sep = '\t', index = True)
+print('file saved to: ', output_path)
 
